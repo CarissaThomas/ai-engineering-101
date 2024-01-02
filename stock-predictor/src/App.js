@@ -1,0 +1,79 @@
+import React, { useState } from "react";
+import { dates } from "./dates";
+import "./App.css"
+import loader from './images/loader.svg';
+
+export default function App() {
+    const [tickersArr, setTickersArr] = useState([]);
+    const [textInput, setTextInput] = useState("");
+    const [errorMessage, setErrorMessage] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [output, setOutput] = useState("");
+
+    const addTicker = (e) => {
+        e.preventDefault();
+        if (textInput.length > 2) {
+            setTickersArr([...tickersArr, textInput.toUpperCase()]);
+            setTextInput("");
+        } else {
+            setErrorMessage("You must add at least one ticker. A ticker is a 3 letter or more code for a stock. E.g TSLA for Tesla.");
+        }
+    };
+
+    const fetchStockData = async () => {
+        setErrorMessage("");
+        setLoading(true);
+        try {
+            const stockData = await Promise.all(tickersArr.map(async (ticker) => {
+                const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${dates.startDate}/${dates.endDate}?apiKey=${process.env.POLYGON_API_KEY}`;
+                const response = await fetch(url);
+                return response.text();
+            }));
+            setLoading(false);
+            fetchReport(stockData.join(''));
+        } catch (err) {
+            setLoading(false);
+            setOutput("There was an error fetching stock data.");
+        }
+    };
+
+    const fetchReport = async (data) => {
+        // AI goes here
+    };
+
+    return (
+        <div>
+            <header>
+                <img src="images/logo-dave-text.png" alt="Dodgy Dave's Stock Predictions"/>
+            </header>
+            <main>
+                <section className="action-panel">
+                    <form id="ticker-input-form" onSubmit={addTicker}>
+                        <label htmlFor="ticker-input"> Add up to 3 stock tickers below to get a super accurate stock predictions report 👇</label>
+                        <input type="text" id="ticker-input" placeholder="MSFT" 
+                               value={textInput} onChange={(e) => setTextInput(e.target.value)} />
+                        <button className="generate-report-btn" onClick={fetchStockData} 
+                                disabled={!tickersArr.length}>Generate Report</button>
+                        {errorMessage && <p style={{color: 'red'}}>{errorMessage}</p>}
+                        {tickersArr.map((ticker, i) => <p key={i}>{ticker}</p>)}
+                    </form>
+                </section>
+                {loading &&
+                    <section className="loading-panel">
+              <img src={loader} alt="loading"/>
+                        <div id="api-message">Querying Stocks API...</div>
+                    </section>
+                }
+                {!loading && output &&
+                    <section className="output-panel">
+                        <h2>Your Report 😜</h2>
+                        <p>{output}</p>
+                    </section>
+                }
+            </main>
+            <footer>
+                &copy; This is not real financial advice!
+            </footer>
+        </div>
+    );
+}
