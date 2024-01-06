@@ -12,6 +12,6 @@ function getDateNDaysAgo(n) {
 }
 
 export const dates = {
-    startDate: getDateNDaysAgo(3), // alter days to increase/decrease data set
+    startDate: getDateNDaysAgo(5), // alter days to increase/decrease data set
     endDate: getDateNDaysAgo(1) // leave at 1 to get yesterday's data
 }
