@@ -18,8 +18,10 @@ export default function App() {
     e.preventDefault();
     if (textInput.length > 2) {
       setTickersArr([...tickersArr, textInput.toUpperCase()]);
-      setButtonClicked(!buttonClicked);
+      setButtonClicked(true);
       setTextInput("");
+      setTickerData([]);
+      setOutput(""); 
     } else {
       setErrorMessage(
         "You must add at least one ticker. A ticker is a 3 letter or more code for a stock. E.g TSLA for Tesla."
@@ -28,37 +30,38 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (buttonClicked) {
+    if (buttonClicked && tickersArr.length) { // Add check for tickersArr length
       const fetchData = async () => {
         let tempData = {};
 
         // Use Promise.all to handle multiple asynchronous requests
-        const dataPromises = tickersArr.map((ticker) =>
-          fetch(
-            `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${dates.startDate}/${dates.endDate}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
-          ).then((response) => response.json())
+        const dataPromises = tickersArr.map(ticker =>
+          fetch(`https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${dates.startDate}/${dates.endDate}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`)
+            .then(response => response.json())
         );
 
         const dataResponses = await Promise.all(dataPromises);
 
-        dataResponses.forEach((data) => {
-          tempData = { ...tempData, ...data };
+        dataResponses.forEach(data => {
+          tempData = {...tempData, ...data};
         });
 
         setTickerData(tempData);
-
+        
         const result = await openAiService.chatCompletion(tempData);
         setOutput(result);
-
-        setLoading(false);
+        
+        setLoading(false); 
+        setButtonClicked(false);
       };
 
       setErrorMessage("");
       setLoading(true);
-
+      
       fetchData();
     }
   }, [buttonClicked]);
+
 
   return (
     <div>
